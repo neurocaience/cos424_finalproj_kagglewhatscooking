@@ -304,7 +304,6 @@ ax.tick_params(labelsize=14)
 
 
 ##### Supervised Learning #####
-
 from sklearn.metrics import confusion_matrix
 from sklearn import metrics
 from sklearn.model_selection import cross_val_score
@@ -359,18 +358,19 @@ fct = np.vectorize(fct)
 # Helpfer function for cross validation
 def calcCrossval(model):
     scores = cross_val_score(model, X_train, y_train, cv=3)
-    print("Cross Val Training Accuracy: " + str(round(scores.mean(),3)) + ", STD: " + str(round(scores.std()*2,3)))
+    print("Cross Val Training Accuracy: " + str(round(scores.mean(),3)) + ", STD: " \
+    + str(round(scores.std()*2,3)))
     return scores
 
 # Create a class that contains a model and all its variables
 # In this case, the 'class' is just a variable of a model
-# that contains the model's relevant variables such as fpr, tpr, etc.
+# that contains the model's relevant variables such as test accuracy.
 
-class modDetails:
-    # This creates an umbrella variable that stores evaluation metrics, and relevant data for each
+class modDetails:    
+    # This creates an umbrella variable that stores evaluation metrics, and relevant data for each 
     # classifier:
-    def __init__(self, predictionsTrain, predictionsTest,
-                 classifier, train_cvscores, training_accuracy, test_accuracy, clf_report,
+    def __init__(self, predictionsTrain, predictionsTest, 
+                classifier, train_cvscores, training_accuracy, test_accuracy, clf_report, 
                  cm, name):
         self.predictionsTrain = predictionsTrain
         self.predictionsTest = predictionsTest
@@ -382,60 +382,71 @@ class modDetails:
         self.cm = cm
         self.name = name
 
-def runModel2(model,name):
+print('done')
+
+def runModel2(model,  X_train, X_test, name):
     print(name + '-'*50 + ' \n')
     
     # Train the Classifier
     # And obtain 10-fold cross validation results of the training
     
-    # GMM not used in this implementation.
-    if name.find('GMM') >= 0: # if this is GMM, only fit with X_train
-        tt = model.fit(X_train)
-    else:
-        tt = model.fit(X_train,y_train)
-
+    tt = model.fit(X_train,y_train)
+    
     train_cvscores = calcCrossval(model)
-
+    
     print(str(type(tt)))
-
-
+    
+    
     # Calculate classifier accuracy on trained data and test data
     predictionsTrain = tt.predict(X_train)
     predictionsTest = tt.predict(X_test)
+    
 
-
-training_accuracy = accuracy_score(y_train, predictionsTrain)
-test_accuracy = accuracy_score(y_test, predictionsTest)
-
+    training_accuracy = accuracy_score(y_train, predictionsTrain)
+    test_accuracy = accuracy_score(y_test, predictionsTest)
+    
     cm = confusion_matrix(y_test, predictionsTest)
     clf_report = classification_report(y_test, predictionsTest, target_names=target_cuisines)
     
     print('Training accuracy: ', training_accuracy)
     print('Test accuracy: ', test_accuracy)
-    
-    
-    
-    # Save results in one umbrella variable of the class modDetails
-    model_info = modDetails(predictionsTrain, predictionsTest,
+
+
+  
+    # Save results in one umbrella variable of the class modDetails  
+    model_info = modDetails(predictionsTrain, predictionsTest, 
                             tt, train_cvscores, training_accuracy, test_accuracy, clf_report, cm,
                             name)
     return model_info
 
-## Feature Selection
+print('done')
+            
+'''
+Run Classifiers
+'''
 
+
+# ## Feature Selection
+
+# In[13]:
+
+
+# https://stackoverflow.com/questions/39839112/the-easiest-way-for-getting\
+#-feature-names-after-running-selectkbest-in-scikit-le
 def get_feature_names(selector, dataBinaryIngredients):
     """
-        Returns feature names from array of indices
-        selector: selectKBest
-        dataBinaryIngredients: dataframe
-        """
+    Returns feature names from array of indices
+    selector: selectKBest 
+    dataBinaryIngredients: dataframe
+    """
     mask = selector.get_support(indices=True) #list of booleans
     column_names = dataBinaryIngredients.columns
     feature_names = column_names[mask].values
     return feature_names
 
+
 from sklearn.feature_selection import RFE
-# recursive feature elimination (RFE) ### Takes a lot of time
+# recursive feature elimination (RFE) ### Takes a lot of time 
 def fs(model):
     selector = RFE(model, 10, step=1)
     selector.fit(X_train, y_train)
@@ -445,72 +456,142 @@ def fs(model):
         if selector.support_[i]:
             print(i, selector.estimator_.coef_[0][index])
             index = index + 1
+            
 
 from sklearn.feature_selection import SelectKBest, chi2
 selector = SelectKBest(chi2, k=20)
 selector.fit_transform(X_train, y_train)
 list(get_feature_names(selector, dataBinaryIngredients))
 
-## Dimensionality Reduction
-# Reset to initial values.
+# Reset to initial values. 
+X_train = train
+y_train =trainLabels
+
+X_test = test
+y_test = testLabels
+
+
+
+# # Dimensionality reduction with truncated SVD. Skip and do feature selection.  
+################################################
+
+# #pca, source: https://towardsdatascience.com/pca-using-python-scikit-learn-e653f8989e60
+# #https://support.minitab.com/en-us/minitab/18/help-and-how-to/modeling-statistics/multi\
+#variate/how-to/principal-components/interpret-the-results/key-results/
+# # https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.TruncatedSVD.\
+#html
+# from sklearn.preprocessing import StandardScaler
+# from sklearn.decomposition import PCA, TruncatedSVD#actually using truncated svd \
+#instead of pca -- X is too large and sparse for PCA
+
+
+# # number of components 
+# n_components = 1000
+# #rescale??? 
+# scaler = StandardScaler()
+# XtrainRescaled = scaler.fit_transform(X_train)
+# XtestRescaled = scaler.transform(X_test)
+# print('done rescaling')
+
+# pca = TruncatedSVD(n_components= n_components)
+# principalComps = pca.fit_transform(X_train) # new X_train
+# principalCompsTest = pca.transform(X_test) # new X_test
+# print('done principal components')
+
+# # pcaRescaled = TruncatedSVD(n_components=n_components)
+# # principalCompsRescaled = pcaRescaled.fit_transform(XtrainRescaled)
+# # principalCompsRescaledTest = pcaRescaled.transform(XtestRescaled)
+# # print('done principal components rescaled')
+
+
+# pca.explained_variance_ratio_.sum() # 0.8978957710784204: 1000 principal components 
+#\explain 90% of the variance. (We have enough princip components)
+
+
+# # Set data to reduced dims, otherwise takes too long 
+# print("Initial X_train.shape ", X_train.shape)
+# print("Initial y_train.shape ", y_train.shape)
+# print("Initial X_test.shape ", X_test.shape)
+# print("Inital y_test.shape ", y_test.shape)
+
+
+# In[22]:
+
+
+# X_train = principalComps
+# X_test = principalCompsTest
+# print("New X_train.shape ", X_train.shape)
+# print("New X_test.shape ", X_test.shape)
+
+################################################################
+
+# Run Models 
+
+# Plot confusion matrix: https://flothesof.github.io/kaggle-whats-cooking-machine-\
+#learning.html?fbclid=IwAR2OXhDXtZ4LRf_K7TO6x2L2d6T3O6-XNtQ1Y4mqTUB1BH7yqGCkaVWiWjM
+def plot_cm(model):
+    """
+    Plot confusion matrix. 
+    """
+    plt.figure(figsize=(10, 10))
+
+    cm = model.cm # confusion_matrix(y_test, predictionsTest)
+    cm_normalized = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+
+    plt.imshow(cm_normalized, interpolation='nearest')
+    plt.title("confusion matrix")
+    plt.colorbar(shrink=0.3)
+    cuisines = target_cuisines
+    tick_marks = np.arange(len(cuisines))
+    plt.xticks(tick_marks, cuisines, rotation=90)
+    plt.yticks(tick_marks, cuisines)
+    plt.tight_layout()
+    plt.ylabel('True label')
+    plt.xlabel('Predicted label')
+
+
+# ### 1. Logistic Regression
+
+# feature selection
+from sklearn.feature_selection import SelectFromModel
+
+# Reset to initial values. 
 X_train = train
 y_train =trainLabels
 X_test = test
 y_test = testLabels
 
-# Truncated data
 
-#pca, source: https://towardsdatascience.com/pca-using-python-scikit-learn-e653f8989e60
-#https://support.minitab.com/en-us/minitab/18/help-and-how-to/modeling-statistics/multivariate/how-to/principal-components/interpret-the-results/key-results/
-# https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.TruncatedSVD.html
-from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA, TruncatedSVD#actually using truncated svd instead of pca -- X is too large and sparse for PCA
+# define model
+xgb = LogisticRegression()
+# feature extraction
+select_model = SelectFromModel(xgb)
+# fit on train set
+fit = select_model.fit(X_train, y_train)
+# transform train set
+X_trainLR = fit.transform(X_train)
+# transform test set
+X_testLR = fit.transform(X_test)
 
-# number of components
-n_components = 1000
-#rescale???
-scaler = StandardScaler()
-XtrainRescaled = scaler.fit_transform(X_train)
-XtestRescaled = scaler.transform(X_test)
-print('done rescaling')
 
-pca = TruncatedSVD(n_components= n_components)
-principalComps = pca.fit_transform(X_train) # new X_train
-principalCompsTest = pca.transform(X_test) # new X_test
-print('done principal components')
 
-pcaRescaled = TruncatedSVD(n_components=n_components)
-principalCompsRescaled = pcaRescaled.fit_transform(XtrainRescaled)
-principalCompsRescaledTest = pcaRescaled.transform(XtestRescaled)
-print('done principal components rescaled')
+print(logregL1_info.clf_report)
 
-## Run Models
-# Set data to reduced dims, otherwise takes too long
-print("Initial X_train.shape ", X_train.shape)
-print("Initial y_train.shape ", y_train.shape)
-print("Initial X_test.shape ", X_test.shape)
-print("Inital y_test.shape ", y_test.shape)
-
-X_train = principalComps
-X_test = principalCompsTest
-print("New X_train.shape ", X_train.shape)
-print("New X_test.shape ", X_test.shape)
-
-# 1. Logistic Regression
-logregL1 = LogisticRegression(C = 1, penalty = 'l2', multi_class = 'multinomial', solver = 'lbfgs')
-logregL1_info = runModel2(logregL1, 'LogRegL1')
-# Visualise
+# Visualise 
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn import metrics
-# Plot confusion matrix: https://flothesof.github.io/kaggle-whats-cooking-machine-learning.html?fbclid=IwAR2OXhDXtZ4LRf_K7TO6x2L2d6T3O6-XNtQ1Y4mqTUB1BH7yqGCkaVWiWjM
+
+
+# Plot confusion matrix: https://flothesof.github.io/kaggle-whats-cooking-\
+#machine-learning.html?fbclid=IwAR2OXhDXtZ4LRf_K7TO6x2L2d6T3O6-XNtQ1Y4mqTUB1BH7yqGCkaVWiWjM
 plt.figure(figsize=(10, 10))
 
 cm = logregL1_info.cm # confusion_matrix(y_test, predictionsTest)
 cm_normalized = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
 
 plt.imshow(cm_normalized, interpolation='nearest')
-plt.title("confusion matrix")
+plt.title("Logistic regression with L2 penalty confusion matrix")
 plt.colorbar(shrink=0.3)
 cuisines = target_cuisines
 tick_marks = np.arange(len(cuisines))
@@ -520,19 +601,100 @@ plt.tight_layout()
 plt.ylabel('True label')
 plt.xlabel('Predicted label')
 
-# Classification report: Adapted from https://flothesof.github.io/kaggle-whats-cooking-machine-learning.html?fbclid=IwAR2OXhDXtZ4LRf_K7TO6x2L2d6T3O6-XNtQ1Y4mqTUB1BH7yqGCkaVWiWjM
-print(logregL1_info.clf_report)
-# chart: accuracy, f1 score
 
-# 2. XGBoost
+plot_cm(logregL1_info)
+
+
+# 2. XGBoost 
+
+
+# feature selection
+from sklearn.feature_selection import SelectFromModel
 from xgboost import XGBClassifier
-xgb = XGBClassifier(objective="multi:softprob", random_state=0)
-xgb_info = runModel2(xgb, "XG Boost")
+# Reset to initial values. 
+X_train = train
+X_test = test
 
-# 3. RandomForest
-rf = RandomForestClassifier(n_estimators=1000, max_depth=2, random_state=0)
-rf_info = runModel2(rf, 'Random Forest')
 
-# 4. Gradient Boosting
-gbc = GradientBoostingClassifier(n_estimators=1000, max_depth=2, random_state=0)
-gbc_info = runModel2(gbc, 'Gradient Boost')
+# define model
+xgb = XGBClassifier(n_estimators=1, max_depth=2, random_state=0)
+# feature extraction
+select_model = SelectFromModel(xgb)
+# fit on train set
+fit = select_model.fit(X_train, y_train)
+# transform train set
+X_trainXgb = fit.transform(X_train)
+# transform test set
+X_testXgb = fit.transform(X_test)
+
+
+
+xgb = XGBClassifier(n_estimators=100, max_depth=50, random_state=0)
+xgb_info = runModel2(xgb, X_trainLR, X_testLR, "XG Boost")
+
+
+print(xgb_info.clf_report)
+
+
+
+# 3. RandomForest 
+
+# Reset data to initial values. 
+X_train = train
+X_test = test
+
+
+# feature selection
+from sklearn.feature_selection import SelectFromModel
+from sklearn.ensemble import RandomForestClassifier
+# Reset to initial values. 
+X_train = train
+X_test = test
+
+# define model
+rfc = RandomForestClassifier()
+# feature extraction
+select_model = SelectFromModel(rfc)
+# fit on train set
+fit = select_model.fit(X_train, y_train)
+# transform train set
+X_trainRfc = fit.transform(X_train)
+# transform test set
+X_testRfc = fit.transform(X_test)
+
+
+
+rf = RandomForestClassifier(n_estimators=200, max_depth=100, random_state=0)
+rf_info = runModel2(rf, X_trainRfc, X_testRfc, 'Random Forest')
+
+print(rf_info.clf_report)
+
+
+# 4. Gradient Boosting 
+
+# Reset data to initial values. 
+X_train = train
+X_test = test
+
+# feature selection
+from sklearn.feature_selection import SelectFromModel
+from sklearn.ensemble import GradientBoostingClassifier
+# Reset to initial values. 
+X_train = train
+X_test = test
+
+# define model
+gbc = GradientBoostingClassifier(n_estimators=50, max_depth=10, random_state=0) 
+
+# feature extraction
+select_model = SelectFromModel(gbc)
+# fit on train set
+fit = select_model.fit(X_train, y_train)
+# transform train set
+X_trainGbc = fit.transform(X_train)
+# transform test set
+X_testGbc = fit.transform(X_test)
+
+
+# run model 
+gbc_info = runModel2(gbc, X_trainGbc, X_testGbc,'Gradient Boost')
