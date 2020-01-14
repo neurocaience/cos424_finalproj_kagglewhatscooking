@@ -1,4 +1,4 @@
-# finalproj
+# Cos424 Final project
 
 Classifying a recipe's culture of origin based on recipe ingredients. 
 
