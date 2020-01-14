@@ -12,5 +12,9 @@ Our group chose the Kaggle What's Cooking challenge: https://www.kaggle.com/c/wh
 
 Group members: Mingyu Song, Lili Cai, Christopher Criscitiello, Collins Metto
 
+See the final writeup: Submitted_writeup.pdf
+
+Code as provided (not organized for now)
+
 
 
