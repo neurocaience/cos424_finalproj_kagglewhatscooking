@@ -2,7 +2,9 @@
 
 Classifying a recipe's culture of origin based on recipe ingredients. 
 
-Princeton University COS424: Fundamentals of Machine Learning  Professor Barbara Englehardt, Spring 2019  Link to class: https://www.cs.princeton.edu/~bee/courses/cos424.html
+Princeton University COS424: Fundamentals of Machine Learning  
+Professor Barbara Englehardt, Spring 2019  
+Link to class: https://www.cs.princeton.edu/~bee/courses/cos424.html
 
 ================
 
